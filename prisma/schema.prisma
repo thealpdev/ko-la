@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Müfredat ve Konu Takibi
+model Topic {
+  id          String   @id @default(cuid())
+  name        String
+  category    String   // e.g., "TYT" or "11. Sinif"
+  subject     String   // e.g., "Matematik", "Fizik"
+  progress    Int      @default(0) // 0 to 100 percentage
+  status      String   @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Ödev ve Görev Yönetimi
+model Assignment {
+  id          String   @id @default(cuid())
+  publisher   String   // e.g., "Bilgi Sarmal", "345"
+  bookName    String
+  description String   // e.g., "Test 1-5 arasi"
+  dueDate     DateTime
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Günlük İstatistikler ve Hedefler
+model DailyStat {
+  id              String   @id @default(cuid())
+  date            DateTime @default(now())
+  solvedQuestions Int      @default(0)
+  goalQuestions   Int      @default(0)
+  pagesRead       Int      @default(0)
+}
+
+// Deneme Sınavı Sonuçları
+model ExamResult {
+  id          String   @id @default(cuid())
+  title       String   // e.g., "Özdebir TYT-1"
+  date        DateTime @default(now())
+  turkishNet  Float
+  mathNet     Float
+  socialNet   Float
+  scienceNet  Float
+  totalNet    Float
+  createdAt   DateTime @default(now())
+}
