@@ -116,7 +116,7 @@ export function KanbanBoard({ initialTasks, studentId }: KanbanBoardProps) {
         const activeIndex = tasks.findIndex((t) => t.id === activeId);
         const newTasks = [...tasks];
         
-        const newStatus = overId as AssignmentStatus;
+        const newStatus = overId as TaskStatus;
         if (newTasks[activeIndex].status !== newStatus) {
           newTasks[activeIndex] = {
             ...newTasks[activeIndex],
