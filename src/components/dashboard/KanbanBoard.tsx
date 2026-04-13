@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { BoardColumn } from "./BoardColumn";
-import { Task, TaskCard } from "./TaskCard";
+import { Task, TaskCard, TaskStatus, TaskPriority } from "./TaskCard";
 import { updateAssignmentStatus } from "@/app/actions/assignment";
 import { AssignmentStatus as PrismaAssignmentStatus, Priority as PrismaPriority } from "@prisma/client";
 import { CreateAssignmentModal } from "./CreateAssignmentModal";
@@ -45,8 +45,8 @@ export function KanbanBoard({ initialTasks, studentId }: KanbanBoardProps) {
     subject: t.subject,
     description: t.description,
     dueDate: new Date(t.dueDate),
-    status: t.status as AssignmentStatus,
-    priority: t.priority as Priority,
+    status: t.status as TaskStatus,
+    priority: t.priority as TaskPriority,
   }));
 
   const [tasks, setTasks] = useState<Task[]>(mappedTasks);

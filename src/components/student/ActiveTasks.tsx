@@ -8,13 +8,15 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { TaskStatus } from "@/components/dashboard/TaskCard";
+
 interface Assignment {
   id: string;
   publisher: string;
   bookName: string;
   description: string;
   dueDate: Date;
-  status: string;
+  status: TaskStatus;
 }
 
 interface ActiveTasksProps {

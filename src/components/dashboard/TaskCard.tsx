@@ -30,6 +30,10 @@ import { toast } from "sonner";
 const AssignmentStatus = (PrismaAssignmentStatus || { TODO: "TODO", IN_PROGRESS: "IN_PROGRESS", DONE: "DONE" }) as any;
 const Priority = (PrismaPriority || { LOW: "LOW", MEDIUM: "MEDIUM", HIGH: "HIGH" }) as any;
 
+// Types for build safety
+export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE";
+export type TaskPriority = "LOW" | "MEDIUM" | "HIGH";
+
 export interface Task {
   id: string;
   publisher: string;
@@ -37,8 +41,8 @@ export interface Task {
   subject?: string | null;
   description: string;
   dueDate: Date;
-  status: AssignmentStatus;
-  priority: Priority;
+  status: TaskStatus;
+  priority: TaskPriority;
 }
 
 interface TaskCardProps {
