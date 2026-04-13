@@ -67,7 +67,7 @@ const priorityMap: Record<TaskPriority, { label: string; color: string; glow: st
   LOW: { label: "Normal", color: "oklch(70% 0.15 250)", glow: "shadow-[0_0_15px_rgba(0,120,255,0.2)]" },
 };
 
-export function TaskCard({ task }: TaskCardProps) {
+export function TaskCard({ task, onEdit }: TaskCardProps) {
   const {
     attributes,
     listeners,
