@@ -212,7 +212,7 @@ export function ExamAnalytics({ exams, studentId }: ExamAnalyticsProps) {
                   stroke="oklch(60% 0.2 300)"
                   strokeWidth={6}
                   dot={{ r: 8, fill: 'oklch(60% 0.2 300)', strokeWidth: 3, stroke: '#050505' }}
-                  activeDot={{ r: 12, strokeWidth: 0, shadow: '0 0 20px oklch(60% 0.2 300)' }}
+                  activeDot={{ r: 10, stroke: 'oklch(60% 0.2 300)', strokeWidth: 6, fill: '#fff' }}
                 />
                 <Line type="monotone" dataKey="mathNet" name="Matematik" stroke="#06b6d4" strokeWidth={3} strokeDasharray="5 5" dot={{ r: 4 }} />
                 <Line type="monotone" dataKey="turkishNet" name="Türkçe" stroke="#ec4899" strokeWidth={3} strokeDasharray="5 5" dot={{ r: 4 }} />
