@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -17,48 +17,46 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { BoardColumn } from "./BoardColumn";
 import { Task, TaskCard } from "./TaskCard";
+import { updateAssignmentStatus } from "@/app/actions/assignment";
+import { AssignmentStatus as PrismaAssignmentStatus, Priority as PrismaPriority } from "@prisma/client";
+import { CreateAssignmentModal } from "./CreateAssignmentModal";
 
-// Mock Data
-const INITIAL_TASKS: Task[] = [
-  {
-    id: "1",
-    publisher: "Bilgi Sarmal",
-    bookName: "Trigonometri",
-    description: "Test 1-3 arası çözülecek.",
-    status: "TODO",
-  },
-  {
-    id: "2",
-    publisher: "MEB",
-    bookName: "Fizik",
-    description: "Vektörler Konu Anlatımı İzle.",
-    status: "TODO",
-  },
-  {
-    id: "3",
-    publisher: "345 Yayınları",
-    bookName: "Paragraf",
-    description: "Günde 20 soru çözülecek.",
-    status: "IN_PROGRESS",
-  },
-  {
-    id: "4",
-    publisher: "Aydın Yayınları",
-    bookName: "Kimya",
-    description: "Gazlar Karma Test 1.",
-    status: "DONE",
-  },
-];
+// Fallback enums in case Prisma Client is stale/not generated
+const AssignmentStatus = (PrismaAssignmentStatus || { TODO: "TODO", IN_PROGRESS: "IN_PROGRESS", DONE: "DONE" }) as any;
+const Priority = (PrismaPriority || { LOW: "LOW", MEDIUM: "MEDIUM", HIGH: "HIGH" }) as any;
 
 const COLUMNS = [
-  { id: "TODO", title: "Yapılacaklar" },
-  { id: "IN_PROGRESS", title: "Devam Edenler" },
-  { id: "DONE", title: "Tamamlananlar" },
+  { id: AssignmentStatus.TODO, title: "Yapılacaklar" },
+  { id: AssignmentStatus.IN_PROGRESS, title: "Devam Edenler" },
+  { id: AssignmentStatus.DONE, title: "Tamamlananlar" },
 ];
 
-export function KanbanBoard() {
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+interface KanbanBoardProps {
+  initialTasks: any[]; // Using any[] for simplicity to match Prisma model
+  studentId?: string;
+}
+
+export function KanbanBoard({ initialTasks, studentId }: KanbanBoardProps) {
+  // Map Prisma model to Task interface
+  const mappedTasks: Task[] = initialTasks.map((t) => ({
+    id: t.id,
+    publisher: t.publisher,
+    bookName: t.bookName,
+    subject: t.subject,
+    description: t.description,
+    dueDate: new Date(t.dueDate),
+    status: t.status as AssignmentStatus,
+    priority: t.priority as Priority,
+  }));
+
+  const [tasks, setTasks] = useState<Task[]>(mappedTasks);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+
+  useEffect(() => {
+    setTasks(mappedTasks);
+  }, [initialTasks]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -91,8 +89,6 @@ export function KanbanBoard() {
 
     if (!isActiveTask) return;
 
-    // Immoveable tasks logic can be added here
-    
     // Dropping over another task
     if (isActiveTask && isOverTask) {
       setTasks((tasks) => {
@@ -103,7 +99,7 @@ export function KanbanBoard() {
           const newTasks = [...tasks];
           newTasks[activeIndex] = {
             ...newTasks[activeIndex],
-            status: newTasks[overIndex].status,
+            status: tasks[overIndex].status,
           };
           return arrayMove(newTasks, activeIndex, overIndex);
         }
@@ -119,16 +115,21 @@ export function KanbanBoard() {
       setTasks((tasks) => {
         const activeIndex = tasks.findIndex((t) => t.id === activeId);
         const newTasks = [...tasks];
-        newTasks[activeIndex] = {
-          ...newTasks[activeIndex],
-          status: overId as Task["status"],
-        };
+        
+        const newStatus = overId as AssignmentStatus;
+        if (newTasks[activeIndex].status !== newStatus) {
+          newTasks[activeIndex] = {
+            ...newTasks[activeIndex],
+            status: newStatus,
+          };
+        }
+        
         return arrayMove(newTasks, activeIndex, activeIndex);
       });
     }
   };
 
-  const onDragEnd = (event: DragEndEvent) => {
+  const onDragEnd = async (event: DragEndEvent) => {
     setActiveTask(null);
     const { active, over } = event;
     if (!over) return;
@@ -136,15 +137,19 @@ export function KanbanBoard() {
     const activeId = active.id;
     const overId = over.id;
 
+    const task = tasks.find((t) => t.id === activeId);
+    if (task) {
+      // Sync with database
+      await updateAssignmentStatus(task.id, task.status);
+    }
+
     if (activeId === overId) return;
 
     setTasks((tasks) => {
       const activeIndex = tasks.findIndex((t) => t.id === activeId);
       const overIndex = tasks.findIndex((t) => t.id === overId);
       
-      // If over index is -1, it means we dropped on a column (already handled in onDragOver but satisfying TS)
       if (overIndex === -1) return tasks;
-
       return arrayMove(tasks, activeIndex, overIndex);
     });
   };
@@ -158,13 +163,21 @@ export function KanbanBoard() {
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
       >
-        <div className="flex gap-6 overflow-x-auto pb-8 h-full scrollbar-hide">
+        <div className="flex gap-10 overflow-x-auto pb-12 h-full scrollbar-hide px-4">
           {COLUMNS.map((col) => (
             <BoardColumn
               key={col.id}
               id={col.id}
               title={col.title}
               tasks={tasks.filter((t) => t.status === col.id)}
+              onAddTask={() => {
+                setTaskToEdit(null);
+                setIsModalOpen(true);
+              }}
+              onEditTask={(task) => {
+                setTaskToEdit(task);
+                setIsModalOpen(true);
+              }}
             />
           ))}
         </div>
@@ -181,6 +194,16 @@ export function KanbanBoard() {
           {activeTask ? <TaskCard task={activeTask} /> : null}
         </DragOverlay>
       </DndContext>
+
+      <CreateAssignmentModal 
+        isOpen={isModalOpen} 
+        onClose={() => {
+          setIsModalOpen(false);
+          setTaskToEdit(null);
+        }} 
+        studentId={studentId}
+        initialData={taskToEdit}
+      />
     </div>
   );
 }

@@ -8,48 +8,194 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Müfredat ve Konu Takibi
+enum Role {
+  COACH
+  STUDENT
+}
+
+// Kullanıcı Profilleri (Supabase Auth ile senkronize)
+model Profile {
+  id       String  @id // Supabase User ID
+  email    String  @unique
+  fullName String?
+  role     Role    @default(STUDENT)
+
+  // Koç-Öğrenci İlişkisi
+  coachId  String?
+  coach    Profile?  @relation("CoachStudents", fields: [coachId], references: [id])
+  students Profile[] @relation("CoachStudents")
+
+  // İlişkili Veriler
+  assignments     Assignment[]
+  examResults     ExamResult[]
+  weeklySchedules WeeklySchedule[]
+  topicProgress   StudentTopicProgress[]
+  books           StudentBook[]
+  recommendations BookRecommendation[] @relation("StudentRecommendations")
+  dailyStats      DailyStat[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Genel Müfredat ve Konu Şablonları
 model Topic {
-  id          String   @id @default(cuid())
-  name        String
-  category    String   // e.g., "TYT" or "11. Sinif"
-  subject     String   // e.g., "Matematik", "Fizik"
-  progress    Int      @default(0) // 0 to 100 percentage
-  status      String   @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id       String @id @default(cuid())
+  name     String
+  category String // "TYT", "AYT", "11. Sınıf" vb.
+  subject  String // "Matematik", "Fizik" vb.
+
+  progresses StudentTopicProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Öğrenci Bazlı Konu İlerlemesi
+model StudentTopicProgress {
+  id        String  @id @default(cuid())
+  studentId String
+  student   Profile @relation(fields: [studentId], references: [id])
+  topicId   String
+  topic     Topic   @relation(fields: [topicId], references: [id])
+
+  status  String @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED
+  mastery Int    @default(0) // 0-100 arası yetkinlik
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, topicId])
+}
+
+// Yayın/Kitap Takibi
+model StudentBook {
+  id        String  @id @default(cuid())
+  studentId String
+  student   Profile @relation(fields: [studentId], references: [id])
+
+  publisher String
+  bookName  String
+  subject   String
+  status    String @default("START") // START, HALF, FINISHED
+
+  chapters  BookChapter[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BookChapter {
+  id           String      @id @default(cuid())
+  bookId       String
+  book         StudentBook @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  name         String
+  isCompleted  Boolean     @default(false)
+  completedTests Int       @default(0)
+  totalTests     Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AssignmentStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
 }
 
 // Ödev ve Görev Yönetimi
 model Assignment {
-  id          String   @id @default(cuid())
-  publisher   String   // e.g., "Bilgi Sarmal", "345"
-  bookName    String
-  description String   // e.g., "Test 1-5 arasi"
-  dueDate     DateTime
-  isCompleted Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
+  id        String  @id @default(cuid())
+  studentId String
+  student   Profile @relation(fields: [studentId], references: [id])
 
-// Günlük İstatistikler ve Hedefler
-model DailyStat {
-  id              String   @id @default(cuid())
-  date            DateTime @default(now())
-  solvedQuestions Int      @default(0)
-  goalQuestions   Int      @default(0)
-  pagesRead       Int      @default(0)
+  publisher   String
+  bookName    String
+  subject     String? // Matematik, Fizik vb.
+  description String
+  dueDate     DateTime
+  status      AssignmentStatus @default(TODO)
+  priority    Priority         @default(MEDIUM)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Deneme Sınavı Sonuçları
 model ExamResult {
-  id          String   @id @default(cuid())
-  title       String   // e.g., "Özdebir TYT-1"
-  date        DateTime @default(now())
-  turkishNet  Float
-  mathNet     Float
-  socialNet   Float
-  scienceNet  Float
-  totalNet    Float
-  createdAt   DateTime @default(now())
+  id        String  @id @default(cuid())
+  studentId String
+  student   Profile @relation(fields: [studentId], references: [id])
+
+  title      String
+  date       DateTime @default(now())
+  turkishNet Float
+  mathNet    Float
+  socialNet  Float
+  scienceNet Float
+  totalNet   Float
+
+  createdAt DateTime @default(now())
+}
+
+// Haftalık Çalışma Programı
+model WeeklySchedule {
+  id        String  @id @default(cuid())
+  studentId String
+  student   Profile @relation(fields: [studentId], references: [id])
+
+  day         String // Pazartesi, Salı vb.
+  lesson      String // Matematik, Fizik vb.
+  targetTopic String
+  studyHours  String // Örn: "14:00 - 16:00"
+  status      String @default("Yapılmadı") // Yapıldı / Yapılmadı
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Günlük İstatistikler ve Hedefler
+model DailyStat {
+  id        String  @id @default(cuid())
+  studentId String
+  student   Profile @relation(fields: [studentId], references: [id])
+
+  date            DateTime @default(now())
+  solvedQuestions Int      @default(0)
+  goalQuestions   Int      @default(0)
+  pagesRead       Int      @default(0)
+  studyMinutes    Int      @default(0)
+
+  @@unique([studentId, date])
+}
+
+// Odaklanma Oturumları
+model StudySession {
+  id        String  @id @default(cuid())
+  studentId String
+  duration  Int     // dakika bazında
+  type      String  // WORK veya BREAK
+  date      DateTime @default(now())
+
+  createdAt DateTime @default(now())
+}
+// Koç Kitap Önerileri
+model BookRecommendation {
+  id        String  @id @default(cuid())
+  studentId String
+  student   Profile @relation("StudentRecommendations", fields: [studentId], references: [id])
+  
+  coachId   String
+  title     String
+  author    String
+  imageUrl  String?
+  reason    String? // Neden önerildiği (Koç notu)
+  
+  createdAt DateTime @default(now())
 }

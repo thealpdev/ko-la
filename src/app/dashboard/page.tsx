@@ -1,80 +1,170 @@
-import { KanbanBoard } from "@/components/dashboard/KanbanBoard";
+import { getMyStudents } from "@/app/actions/student";
+import { getDashboardSummary } from "@/app/actions/stats";
 import { 
-  LayoutDashboard, 
+  Plus, 
   Users, 
+  ChevronRight, 
   BookOpen, 
   BarChart3, 
-  Settings, 
-  Bell,
   Search,
-  Plus
+  Bell,
+  GraduationCap,
+  Sparkles,
+  Zap,
+  Target,
+  TrendingUp,
+  Activity
 } from "lucide-react";
+import Link from "next/link";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { AddStudentModal } from "@/components/dashboard/AddStudentModal";
+import { Card, CardContent } from "@/components/ui/card";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const [students, summary] = await Promise.all([
+    getMyStudents(),
+    getDashboardSummary()
+  ]);
+
   return (
-    <div className="flex h-screen bg-white dark:bg-black overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-zinc-200 dark:border-zinc-800 flex flex-col bg-zinc-50/50 dark:bg-zinc-950/20">
-        <div className="p-6">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">K</span>
-            </div>
-            <span className="font-bold text-xl tracking-tight text-zinc-900 dark:text-zinc-100">Koçla</span>
-          </div>
-        </div>
+    <div className="flex h-screen bg-background text-foreground overflow-hidden selection:bg-primary/20">
+      <Sidebar />
 
-        <nav className="flex-1 px-4 py-4 space-y-1">
-          <NavItem icon={<LayoutDashboard size={20} />} label="Dashboard" active />
-          <NavItem icon={<Users size={20} />} label="Öğrenciler" />
-          <NavItem icon={<BookOpen size={20} />} label="Müfredat" />
-          <NavItem icon={<BarChart3 size={20} />} label="Analizler" />
-          <NavItem icon={<Settings size={20} />} label="Ayarlar" />
-        </nav>
-
-        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer">
-            <div className="w-9 h-9 rounded-full bg-zinc-200 dark:bg-zinc-800" />
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Admin Koç</span>
-              <span className="text-xs text-zinc-500">Öğretmen Hesabı</span>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-8 bg-white dark:bg-black">
-          <div className="flex items-center gap-4 flex-1">
-            <div className="relative w-96">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
+      <main className="flex-1 flex flex-col min-w-0 relative">
+        <div className="absolute inset-0 mesh-gradient opacity-10 pointer-events-none" />
+        
+        {/* Header */}
+        <header className="h-20 border-b border-white/5 flex items-center justify-between px-10 bg-background/50 backdrop-blur-3xl z-30">
+          <div className="flex items-center gap-6 flex-1">
+            <div className="relative w-96 group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4 group-focus-within:text-primary transition-colors" />
               <input 
                 type="text" 
-                placeholder="Öğrenci veya görev ara..."
-                className="w-full bg-zinc-100 dark:bg-zinc-900 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                placeholder="Evrensel Arama..."
+                className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/30 focus:bg-white/[0.05] transition-all outline-none placeholder:text-zinc-600 font-medium"
               />
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <button className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-500 transition-colors">
-              <Bell size={20} />
+          <div className="flex items-center gap-6">
+            <button className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/[0.05] border border-white/5 text-zinc-500 hover:text-primary transition-all relative">
+              <Bell size={18} />
+              <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-primary rounded-full shadow-[0_0_8px_oklch(60%_0.2_300)]" />
             </button>
-            <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg shadow-indigo-500/20 active:scale-95">
-              <Plus size={18} />
-              <span>Yeni Ödev</span>
-            </button>
+            <div className="h-8 w-px bg-white/5 mx-2" />
+            <AddStudentModal />
           </div>
         </header>
 
-        <div className="flex-1 overflow-hidden flex flex-col p-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">Ödev Atama Paneli</h1>
-            <p className="text-zinc-500 dark:text-zinc-400">Öğrencinin haftalık çalışma planını buradan yönetebilirsin.</p>
+        <div className="flex-1 overflow-y-auto p-10 scrollbar-hide relative z-10">
+          <div className="mb-12 animate-fade-in">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_oklch(60%_0.2_300)]" />
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Filo Komutası</p>
+            </div>
+            <h1 className="text-4xl font-black tracking-tight text-white mb-2">Genel Bakış</h1>
+            <p className="text-zinc-500 font-medium">Portföyünüzdeki tüm öğrencilerin anlık performans verileri.</p>
           </div>
 
-          <div className="flex-1 min-h-0">
-            <KanbanBoard />
+          {/* Global Telemetry Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 animate-slide-up">
+             <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 relative overflow-hidden group hover:bg-white/[0.04] transition-all">
+                <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:scale-150 transition-transform" />
+                <div className="flex items-center gap-4 mb-6">
+                   <div className="p-3 bg-primary/10 rounded-xl text-primary">
+                      <Users size={20} />
+                   </div>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Aktif Dehalar</span>
+                </div>
+                <div className="text-5xl font-black text-white">{summary?.totalStudents || 0}</div>
+             </div>
+
+             <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 relative overflow-hidden group hover:bg-white/[0.04] transition-all">
+                <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:scale-150 transition-transform" />
+                <div className="flex items-center gap-4 mb-6">
+                   <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500">
+                      <Zap size={20} />
+                   </div>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Bugün Çözülen</span>
+                </div>
+                <div className="text-5xl font-black text-white">{summary?.totalQuestionsToday || 0}</div>
+             </div>
+
+             <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 relative overflow-hidden group hover:bg-white/[0.04] transition-all">
+                <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:scale-150 transition-transform" />
+                <div className="flex items-center gap-4 mb-6">
+                   <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-500">
+                      <TrendingUp size={20} />
+                   </div>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Haftalık Ortalama</span>
+                </div>
+                <div className="text-5xl font-black text-white">%{summary?.avgGoalCompletion || 0}</div>
+             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-scale-in">
+            {students.length > 0 ? (
+              students.map((student) => (
+                <Link key={student.id} href={`/dashboard/students/${student.id}`}>
+                  <Card className="group relative border-white/5 bg-white/[0.02] backdrop-blur-xl hover:bg-white/[0.05] hover:border-primary/20 transition-all duration-500 cursor-pointer rounded-[3rem] overflow-hidden shadow-2xl hover:shadow-[0_20px_60px_rgba(0,0,0,0.5)] active:scale-[0.98]">
+                    <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <Sparkles className="w-6 h-6 text-primary drop-shadow-[0_0_8px_oklch(60%_0.2_300)]" />
+                    </div>
+                    
+                    <CardContent className="p-10">
+                      <div className="flex items-center gap-6 mb-10">
+                        <div className="w-20 h-20 rounded-[2.2rem] bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-all duration-500 shadow-xl shadow-primary/5 neon-border relative">
+                          <GraduationCap size={40} />
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full border-4 border-background flex items-center justify-center">
+                             <Activity size={10} className="text-white" />
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-black text-2xl text-zinc-100 group-hover:text-white transition-colors truncate tracking-tighter">
+                            {student.fullName || student.email.split('@')[0]}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                             <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                             <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest opacity-60">Elit Üye</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-6 pt-10 border-t border-white/5">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-1">
+                            <p className="text-[9px] text-zinc-600 uppercase font-black tracking-widest">Günlük Kota</p>
+                            <div className="flex items-center gap-2">
+                               <span className="text-xl font-black text-white">450</span>
+                               <span className="text-xs text-zinc-600">/ 500</span>
+                            </div>
+                          </div>
+                          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 text-zinc-500 group-hover:text-primary transition-all group-hover:scale-110 group-hover:rotate-12">
+                             <Target size={20} />
+                          </div>
+                        </div>
+                        
+                        <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                           <div className="w-3/4 h-full bg-primary shadow-[0_0_10px_oklch(60%_0.2_300)] transition-all duration-1000" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full py-32 flex flex-col items-center justify-center text-center animate-fade-in">
+                <div className="w-32 h-32 rounded-[3.5rem] bg-white/[0.02] border border-white/5 flex items-center justify-center text-zinc-800 mb-8 shadow-inner">
+                  <Users size={64} />
+                </div>
+                <div className="space-y-4">
+                  <h3 className="text-2xl font-black text-white tracking-tight">Portföyünüzde Henüz Kimse Yok</h3>
+                  <p className="text-zinc-500 max-w-xs font-medium leading-relaxed">İlk öğrencinizi ekleyerek sisteme dahil edin ve gelişimini izlemeye başlayın.</p>
+                  <div className="pt-6">
+                    <AddStudentModal />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -82,18 +172,4 @@ export default function DashboardPage() {
   );
 }
 
-function NavItem({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) {
-  return (
-    <div className={`
-      flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer group
-      ${active 
-        ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400" 
-        : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-zinc-100"}
-    `}>
-      <span className={active ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300"}>
-        {icon}
-      </span>
-      {label}
-    </div>
-  );
-}
+
