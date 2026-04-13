@@ -62,9 +62,9 @@ const subjectIconMap: Record<string, any> = {
 };
 
 const priorityMap: Record<TaskPriority, { label: string; color: string; glow: string }> = {
-  [Priority.HIGH]: { label: "Kritik", color: "oklch(65% 0.25 20)", glow: "shadow-[0_0_20px_rgba(255,50,50,0.3)]" },
-  [Priority.MEDIUM]: { label: "Önemli", color: "oklch(75% 0.2 60)", glow: "shadow-[0_0_15px_rgba(255,165,0,0.2)]" },
-  [Priority.LOW]: { label: "Normal", color: "oklch(70% 0.15 250)", glow: "shadow-[0_0_15px_rgba(0,120,255,0.2)]" },
+  HIGH: { label: "Kritik", color: "oklch(65% 0.25 20)", glow: "shadow-[0_0_20px_rgba(255,50,50,0.3)]" },
+  MEDIUM: { label: "Önemli", color: "oklch(75% 0.2 60)", glow: "shadow-[0_0_15px_rgba(255,165,0,0.2)]" },
+  LOW: { label: "Normal", color: "oklch(70% 0.15 250)", glow: "shadow-[0_0_15px_rgba(0,120,255,0.2)]" },
 };
 
 export function TaskCard({ task }: TaskCardProps) {
