@@ -30,9 +30,30 @@ export async function addWeeklyScheduleEntry(studentId: string, data: {
       }
     });
     revalidatePath(`/dashboard/students/${studentId}`);
+    revalidatePath("/student");
     return { success: true };
   } catch (error) {
     console.error("Program girişi eklenemedi:", error);
+    return { error: "İşlem başarısız oldu." };
+  }
+}
+
+export async function updateWeeklyScheduleEntry(id: string, studentId: string, data: {
+  day?: string;
+  lesson?: string;
+  targetTopic?: string;
+  studyHours?: string;
+}) {
+  try {
+    await prisma.weeklySchedule.update({
+      where: { id },
+      data
+    });
+    revalidatePath(`/dashboard/students/${studentId}`);
+    revalidatePath("/student");
+    return { success: true };
+  } catch (error) {
+    console.error("Program girişi güncellenemedi:", error);
     return { error: "İşlem başarısız oldu." };
   }
 }
@@ -50,6 +71,7 @@ export async function toggleWeeklyScheduleStatus(id: string, studentId: string) 
     });
 
     revalidatePath(`/dashboard/students/${studentId}`);
+    revalidatePath("/student");
     return { success: true };
   } catch (error) {
     console.error("Durum güncellenemedi:", error);
@@ -61,6 +83,7 @@ export async function deleteWeeklyScheduleEntry(id: string, studentId: string) {
   try {
     await prisma.weeklySchedule.delete({ where: { id } });
     revalidatePath(`/dashboard/students/${studentId}`);
+    revalidatePath("/student");
     return { success: true };
   } catch (error) {
     console.error("Kayıt silinemedi:", error);
